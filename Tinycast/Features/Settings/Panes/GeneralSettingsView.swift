@@ -69,6 +69,8 @@ struct GeneralSettingsView: View {
                 SettingsSectionHeader(.generalGeneral)
             }
 
+            ProxySettingsSection()
+
             Section {
                 Picker(selection: $settings.appearance) {
                     ForEach(AppAppearance.allCases) { appearance in

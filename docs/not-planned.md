@@ -162,7 +162,6 @@ Tinycast is an all-in-one launcher, not a full window manager. Its window tools 
 - **Old Raycast AI chats on import.** Raycast doesn't share that data. ([#1286](https://github.com/abue-ammar/tinycast/issues/1286))
 - **Quick Action results inside the palette, or a preview that stays open.** **Instead:** copy the
   result with its copy button. ([#1360](https://github.com/abue-ammar/tinycast/issues/1360), [#1023](https://github.com/abue-ammar/tinycast/issues/1023))
-- **A proxy setting.** ([#430](https://github.com/abue-ammar/tinycast/issues/430))
 - **Your own dictation models or a personal word list.** Tinycast is not a dictation app.
   ([#1529](https://github.com/abue-ammar/tinycast/issues/1529), [#1332](https://github.com/abue-ammar/tinycast/issues/1332))
 

@@ -146,6 +146,11 @@ enum SettingsSearchCatalog {
             .generalGeneral, "Auto-switch input source",
             keywords: ["keyboard", "layout", "language", "abc"]),
         .init(
+            .generalNetwork, "Proxy",
+            keywords: [
+                "network", "http", "https", "socks", "socks5", "internet", "tunnel", "localhost"
+            ]),
+        .init(
             .generalAppearance, "Appearance",
             keywords: ["dark", "light", "mode", "theme"]),
         .init(

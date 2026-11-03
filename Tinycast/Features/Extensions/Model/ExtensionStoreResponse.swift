@@ -89,6 +89,7 @@ enum ExtensionStoreResponse {
 
 enum ExtensionStoreError: LocalizedError {
     case malformedResponse
+    case proxyRejected
     case rejected(String)
     case downloadFailed(String)
     case noPackageManager
@@ -100,6 +101,9 @@ enum ExtensionStoreError: LocalizedError {
         switch self {
         case .malformedResponse:
             return String(localized: "The server answered with something this version doesn't understand.")
+        case .proxyRejected:
+            return String(
+                localized: "The proxy rejected the connection. Check its type, server and credentials.")
         case .rejected(let message):
             return message
         case .downloadFailed(let reason):

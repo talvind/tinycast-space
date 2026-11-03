@@ -117,6 +117,10 @@ enum AppSettingsKey: String, CaseIterable {
     case dictationIdleRelease = "dictationIdleReleaseMinutes"
     case dictationLanguage = "dictationLanguage"
     case supportReminders = "supportReminders"
+    case proxyEnabled = "proxyEnabled"
+    case proxyKind = "proxyKind"
+    case proxyServer = "proxyServer"
+    case proxyUsername = "proxyUsername"
     case settingsFileEnabled = "settingsFileEnabled"
     case allowedDeepLinks = "allowedDeepLinks"
 }

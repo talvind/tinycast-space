@@ -16,6 +16,7 @@ enum UpdateDownloader {
             // Cacheless, never `URLSession.shared`, so the only copy is the one on disk.
             config.urlCache = nil
             config.timeoutIntervalForRequest = 60
+            NetworkProxy.apply(to: config)
             let delegate = Delegate(
                 destination: destination, expected: release.assetSize, events: continuation)
             let session = URLSession(configuration: config, delegate: delegate, delegateQueue: nil)

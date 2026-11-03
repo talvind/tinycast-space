@@ -102,7 +102,11 @@ because the app rewrites the file.
     "popToRootSeconds": 0,
     "escapeKeyBehavior": "navigateBackOrClose",
     "autoSwitchInputSource": null,
-    "supportReminders": true
+    "supportReminders": true,
+    "proxyEnabled": false,
+    "proxyType": "http",
+    "proxyServer": "127.0.0.1:8080",
+    "proxyUsername": ""
   },
   "clipboard": {
     "enabled": true,
@@ -134,6 +138,12 @@ Where a number has a special case, the case is a word:
 | `calendar.hideCurrentEventAfterMinutes` | `"never"`, 0 (as it starts), 5, 10, 30 |
 | `windowManagement.gap` | 0 to 64 |
 | `snippets.folder`, `notes.folder` | an absolute or `~/` path, or `null` for Application Support |
+| `general.proxyType` | `"http"`, `"https"`, `"socks5"` |
+| `general.proxyServer` | `host:port`, or `""` |
+| `general.proxyUsername` | an optional username, or `""` |
+
+The proxy password has no key here: it is stored only in Keychain. `general.proxyEnabled` is off by
+default, and all four proxy keys stay out of backups.
 
 On first launch, `general.language` is set to the primary system language if supported, otherwise
 `"en"`. That explicit choice is saved; later system-language changes do not change it.

@@ -667,6 +667,25 @@ final class AppSettings {
         didSet { defaults.set(supportRemindersEnabled, forKey: Key.supportReminders.rawValue) }
     }
 
+    /// Whether Tinycast routes its internet requests through a proxy of the user's choosing.
+    var proxyEnabled: Bool {
+        didSet { defaults.set(proxyEnabled, forKey: Key.proxyEnabled.rawValue) }
+    }
+
+    var proxyKind: ProxyConfiguration.Kind {
+        didSet { defaults.set(proxyKind.rawValue, forKey: Key.proxyKind.rawValue) }
+    }
+
+    /// `host:port`, as typed in Settings; `NetworkProxy` parses it before a session uses it.
+    var proxyServer: String {
+        didSet { defaults.set(proxyServer, forKey: Key.proxyServer.rawValue) }
+    }
+
+    /// Optional; its password lives in Keychain through `ProxyCredentialStore`.
+    var proxyUsername: String {
+        didSet { defaults.set(proxyUsername, forKey: Key.proxyUsername.rawValue) }
+    }
+
     /// Whether settings.json mirrors these settings; `AppCore` starts and stops the mirror.
     var settingsFileEnabled: Bool {
         didSet { defaults.set(settingsFileEnabled, forKey: Key.settingsFileEnabled.rawValue) }
@@ -911,6 +930,12 @@ final class AppSettings {
         supportRemindersEnabled =
             defaults.object(forKey: Key.supportReminders.rawValue) == nil
             || defaults.bool(forKey: Key.supportReminders.rawValue)
+        proxyEnabled = defaults.bool(forKey: Key.proxyEnabled.rawValue)
+        proxyKind =
+            defaults.string(forKey: Key.proxyKind.rawValue)
+            .flatMap(ProxyConfiguration.Kind.init(rawValue:)) ?? .http
+        proxyServer = defaults.string(forKey: Key.proxyServer.rawValue) ?? ""
+        proxyUsername = defaults.string(forKey: Key.proxyUsername.rawValue) ?? ""
         settingsFileEnabled = defaults.bool(forKey: Key.settingsFileEnabled.rawValue)
         allowedDeepLinks = defaults.stringArray(forKey: Key.allowedDeepLinks.rawValue) ?? []
         loginItemRead = Task { [weak self] in

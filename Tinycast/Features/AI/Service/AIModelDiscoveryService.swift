@@ -1,22 +1,15 @@
 import Foundation
 
 final class AIModelDiscoveryService: Sendable {
-    /// One session per process, not per editor sheet; cacheless so no response is cached on disk.
-    private nonisolated static let session: URLSession = {
-        let configuration = URLSessionConfiguration.ephemeral
-        configuration.urlCache = nil
-        configuration.httpCookieStorage = nil
-        configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
-        return URLSession(configuration: configuration)
-    }()
-
     func models(
         provider: AIProviderKind, baseURL: URL, apiKey: String, headers: [String: String]
     ) async throws -> [AIModelDiscovery.Model] {
         let query = try AIModelDiscovery.query(
             provider: provider, baseURL: baseURL, apiKey: apiKey,
             appTitle: Bundle.main.appDisplayName, headers: headers)
-        let (data, response) = try await Self.session.data(for: query.request)
+        let session = Self.makeSession()
+        defer { session.invalidateAndCancel() }
+        let (data, response) = try await session.data(for: query.request)
         try Task.checkCancellation()
         guard let response = response as? HTTPURLResponse else {
             throw AIModelDiscovery.DiscoveryError.unavailable
@@ -35,5 +28,15 @@ final class AIModelDiscoveryService: Sendable {
         default:
             throw AIModelDiscovery.DiscoveryError.unavailable
         }
+    }
+
+    /// Cacheless, and fresh per lookup so a proxy change applies without relaunching.
+    private static func makeSession() -> URLSession {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.urlCache = nil
+        configuration.httpCookieStorage = nil
+        configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+        NetworkProxy.apply(to: configuration)
+        return URLSession(configuration: configuration)
     }
 }
