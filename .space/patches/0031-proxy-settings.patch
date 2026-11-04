@@ -1,0 +1,1798 @@
+diff --git a/Scripts/run-tests.sh b/Scripts/run-tests.sh
+index 0e066d1db8efdcf941a20626dfc4e828ac2b472b..7cc101ae7091dfd6930ae12b2fd723f9a5fd44b1 100755
+--- a/Scripts/run-tests.sh
++++ b/Scripts/run-tests.sh
+@@ -403,6 +403,11 @@ run dictation-worker-test  Tinycast/Features/Dictation/Model/DictationModel.swif
+                            Tinycast/Features/Dictation/Service/DictationWorker.swift \
+                            Tinycast/Features/Dictation/Service/DictationModelStore.swift \
+                            Tinycast/Features/Dictation/Service/DictationModelDownloader.swift \
++                           Tinycast/Features/Settings/Model/ProxyConfiguration.swift \
++                           Tinycast/Features/Settings/Service/NetworkProxy.swift \
++                           Tinycast/Features/Settings/Service/ProxyCredentialStore.swift \
++                           Tinycast/Platform/KeychainSecretStore.swift \
++                           Tinycast/Features/Settings/AppSettingsKey.swift \
+                            Tinycast/Platform/ProcessExit.swift Tinycast/Platform/AppPaths.swift
+ run hotkey-test            Tinycast/Features/HotKeys/Model/DoubleTapModifier.swift \
+                            Tinycast/Features/HotKeys/Model/ModifierKey.swift \
+@@ -452,6 +457,11 @@ run ext-icon-test          Tinycast/Platform/Appearance.swift \
+                            Tinycast/Features/Extensions/Service/ExtensionNodeShims.swift \
+                            Tinycast/Features/Extensions/Service/ExtensionRuntime.swift \
+                            Tinycast/Features/Extensions/Service/ExtensionIconCache.swift \
++                           Tinycast/Features/Settings/Model/ProxyConfiguration.swift \
++                           Tinycast/Features/Settings/Service/NetworkProxy.swift \
++                           Tinycast/Features/Settings/Service/ProxyCredentialStore.swift \
++                           Tinycast/Platform/KeychainSecretStore.swift \
++                           Tinycast/Features/Settings/AppSettingsKey.swift \
+                            Tinycast/Features/Extensions/UI/ExtensionAnimatedImage.swift \
+                            Tinycast/Features/Extensions/UI/ExtensionImage.swift \
+                            Tinycast/Features/Clipboard/Model/ColorValue.swift \
+@@ -669,6 +679,7 @@ run slow -O raycast-test   Tinycast/Features/Backup/Model/RaycastImportError.swi
+                            Tinycast/Features/Clipboard/Model/ColorSpaces.swift
+ run settings-backup-test   Tinycast/Features/Settings/AppSettingsKey.swift \
+                            Tinycast/Features/Backup/Model/SettingsBackupCoverage.swift
++run proxy-test             Tinycast/Features/Settings/Model/ProxyConfiguration.swift
+ run hyper-key-engine-test  Tinycast/Features/HotKeys/Model/HyperKeyEngine.swift \
+                            Tinycast/Features/HotKeys/Model/HyperKey.swift \
+                            Tinycast/Features/HotKeys/Model/HIDKeyMapping.swift \
+@@ -786,6 +797,11 @@ run slow ext-test          -parse-as-library \
+                            $E/Service/ExtensionRuntime.swift \
+                            $E/Service/ExtensionNameResolver.swift \
+                            $E/Service/ExtensionWebSocketBridge.swift \
++                           Tinycast/Features/Settings/Model/ProxyConfiguration.swift \
++                           Tinycast/Features/Settings/Service/NetworkProxy.swift \
++                           Tinycast/Features/Settings/Service/ProxyCredentialStore.swift \
++                           Tinycast/Platform/KeychainSecretStore.swift \
++                           Tinycast/Features/Settings/AppSettingsKey.swift \
+                            $E/UI/ExtensionAnimatedImage.swift \
+                            $E/UI/ExtensionImage.swift \
+                            $E/UI/ExtensionScreen.swift \
+@@ -805,6 +821,11 @@ run updates-test           Tinycast/Features/Updates/Model/*.swift \
+ run update-check-test      Tinycast/Features/Updates/Model/*.swift \
+                            Tinycast/Features/Updates/Service/UpdateCheckStore.swift \
+                            Tinycast/Features/Updates/Service/UpdateFailure.swift \
++                           Tinycast/Features/Settings/Model/ProxyConfiguration.swift \
++                           Tinycast/Features/Settings/Service/NetworkProxy.swift \
++                           Tinycast/Features/Settings/Service/ProxyCredentialStore.swift \
++                           Tinycast/Platform/KeychainSecretStore.swift \
++                           Tinycast/Features/Settings/AppSettingsKey.swift \
+                            Tinycast/Platform/AppPaths.swift
+ run support-test           Tinycast/Features/Support/Model/*.swift
+ run ai-provider-test       Tinycast/Features/Settings/AppSettingsKey.swift \
+@@ -914,6 +935,9 @@ run mcp-oauth-test         Tinycast/Platform/ExecutableLocator.swift \
+                            Tinycast/Platform/ProcessExit.swift \
+                            Tinycast/Platform/KeychainSecretStore.swift \
+                            Tinycast/Features/Settings/AppSettingsKey.swift \
++                           Tinycast/Features/Settings/Model/ProxyConfiguration.swift \
++                           Tinycast/Features/Settings/Service/NetworkProxy.swift \
++                           Tinycast/Features/Settings/Service/ProxyCredentialStore.swift \
+                            Tinycast/Features/AI/Model/AIConnection.swift \
+                            Tinycast/Features/AI/Model/AppleIntelligence.swift \
+                            Tinycast/Features/AI/Model/AITool.swift \
+@@ -930,6 +954,9 @@ run slow mcp-stdio-test    Tinycast/Platform/ExecutableLocator.swift \
+                            Tinycast/Platform/ProcessExit.swift \
+                            Tinycast/Platform/KeychainSecretStore.swift \
+                            Tinycast/Features/Settings/AppSettingsKey.swift \
++                           Tinycast/Features/Settings/Model/ProxyConfiguration.swift \
++                           Tinycast/Features/Settings/Service/NetworkProxy.swift \
++                           Tinycast/Features/Settings/Service/ProxyCredentialStore.swift \
+                            Tinycast/Features/AI/Model/AIConnection.swift \
+                            Tinycast/Features/AI/Model/AppleIntelligence.swift \
+                            Tinycast/Features/AI/Model/AITool.swift \
+diff --git a/Tests/proxy-test.swift b/Tests/proxy-test.swift
+new file mode 100644
+index 0000000000000000000000000000000000000000..c67e2a401298d92b2bd041e8e5e4743ef4b24664
+--- /dev/null
++++ b/Tests/proxy-test.swift
+@@ -0,0 +1,77 @@
++import Foundation
++
++@main
++struct ProxyTest {
++    static func main() {
++        var failures = 0
++
++        func check(_ description: String, _ condition: @autoclosure () -> Bool) {
++            if condition() {
++                print("PASS  \(description)")
++            } else {
++                print("FAIL  \(description)")
++                failures += 1
++            }
++        }
++
++        let http = ProxyConfiguration(
++            kind: .http, host: "127.0.0.1", port: 7890, username: nil, password: nil)
++        check("an HTTP proxy parses", http?.kind == .http)
++        check("its host survives", http?.host == "127.0.0.1")
++        check("its port survives", http?.port == 7890)
++
++        let socks = ProxyConfiguration(
++            kind: .socks5, host: "proxy.local", port: 1080, username: nil, password: nil)
++        check("a SOCKS5 proxy parses", socks?.kind == .socks5)
++
++        let authenticated = ProxyConfiguration(
++            kind: .http, host: "proxy.local", port: 8080, username: " user ", password: "pass")
++        check("the username is trimmed", authenticated?.username == "user")
++        check("the password survives", authenticated?.password == "pass")
++        check(
++            "an empty password becomes nil",
++            ProxyConfiguration(
++                kind: .http, host: "proxy.local", port: 8080, username: nil, password: ""
++            )?.password == nil)
++
++        check(
++            "a missing host is rejected",
++            ProxyConfiguration(kind: .http, host: " ", port: 8080, username: nil, password: nil)
++                == nil)
++        check(
++            "a host with a path is rejected",
++            ProxyConfiguration(
++                kind: .http, host: "proxy.local/path", port: 8080, username: nil, password: nil)
++                == nil)
++        check(
++            "a port outside the range is rejected",
++            ProxyConfiguration(
++                kind: .http, host: "proxy.local", port: 70_000, username: nil, password: nil)
++                == nil)
++        let server = ProxyConfiguration.serverParts(from: "2.27.16.115:11080")
++        check("a server field splits into a host", server?.host == "2.27.16.115")
++        check("a server field splits into a port", server?.port == 11080)
++        check(
++            "a host name with a port parses",
++            ProxyConfiguration.serverParts(from: "proxy.local:1080")?.host == "proxy.local")
++        check(
++            "an IPv6 literal parses",
++            ProxyConfiguration.serverParts(from: "[::1]:1080")?.host == "::1")
++        check("a missing port is rejected", ProxyConfiguration.serverParts(from: "proxy.local") == nil)
++        check(
++            "a path is rejected",
++            ProxyConfiguration.serverParts(from: "proxy.local:8080/path") == nil)
++        check(
++            "an out-of-range port is rejected",
++            ProxyConfiguration.serverParts(from: "proxy.local:70000") == nil)
++
++        check(
++            "the kind's default ports are right",
++            ProxyConfiguration.Kind.http.defaultPort == 80
++                && ProxyConfiguration.Kind.https.defaultPort == 443
++                && ProxyConfiguration.Kind.socks5.defaultPort == 1080)
++
++        print(failures == 0 ? "\nALL PASSED" : "\n\(failures) FAILED")
++        exit(failures == 0 ? 0 : 1)
++    }
++}
+diff --git a/Tinycast/Features/AI/Service/AIModelDiscoveryService.swift b/Tinycast/Features/AI/Service/AIModelDiscoveryService.swift
+index 716f95148d6159fad3dfcf99c522565584290810..6c9fc424caccbf0a29a28931c079a98568f5537e 100644
+--- a/Tinycast/Features/AI/Service/AIModelDiscoveryService.swift
++++ b/Tinycast/Features/AI/Service/AIModelDiscoveryService.swift
+@@ -1,22 +1,15 @@
+ import Foundation
+ 
+ final class AIModelDiscoveryService: Sendable {
+-    /// One session per process, not per editor sheet; cacheless so no response is cached on disk.
+-    private nonisolated static let session: URLSession = {
+-        let configuration = URLSessionConfiguration.ephemeral
+-        configuration.urlCache = nil
+-        configuration.httpCookieStorage = nil
+-        configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+-        return URLSession(configuration: configuration)
+-    }()
+-
+     func models(
+         provider: AIProviderKind, baseURL: URL, apiKey: String, headers: [String: String]
+     ) async throws -> [AIModelDiscovery.Model] {
+         let query = try AIModelDiscovery.query(
+             provider: provider, baseURL: baseURL, apiKey: apiKey,
+             appTitle: Bundle.main.appDisplayName, headers: headers)
+-        let (data, response) = try await Self.session.data(for: query.request)
++        let session = Self.makeSession()
++        defer { session.invalidateAndCancel() }
++        let (data, response) = try await session.data(for: query.request)
+         try Task.checkCancellation()
+         guard let response = response as? HTTPURLResponse else {
+             throw AIModelDiscovery.DiscoveryError.unavailable
+@@ -36,4 +29,14 @@ final class AIModelDiscoveryService: Sendable {
+             throw AIModelDiscovery.DiscoveryError.unavailable
+         }
+     }
++
++    /// Cacheless, and fresh per lookup so a proxy change applies without relaunching.
++    private static func makeSession() -> URLSession {
++        let configuration = URLSessionConfiguration.ephemeral
++        configuration.urlCache = nil
++        configuration.httpCookieStorage = nil
++        configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
++        NetworkProxy.apply(to: configuration)
++        return URLSession(configuration: configuration)
++    }
+ }
+diff --git a/Tinycast/Features/AI/Service/HTTPAIProvider.swift b/Tinycast/Features/AI/Service/HTTPAIProvider.swift
+index 4a576e5a61b3685fa92c116640187628ab79ee53..9a9bf15a8d7d203b93978eb240828210307c26a3 100644
+--- a/Tinycast/Features/AI/Service/HTTPAIProvider.swift
++++ b/Tinycast/Features/AI/Service/HTTPAIProvider.swift
+@@ -107,6 +107,7 @@ struct HTTPAIProvider: AIProvider {
+         let configuration = URLSessionConfiguration.ephemeral
+         configuration.urlCache = nil
+         configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
++        NetworkProxy.apply(to: configuration)
+         return URLSession(configuration: configuration)
+     }
+ 
+diff --git a/Tinycast/Features/Backup/Model/SettingsBackupCoverage.swift b/Tinycast/Features/Backup/Model/SettingsBackupCoverage.swift
+index 3516d72ecd869ffd3b6e57029e14540157055115..49baca500640ccaa6bc43933685aa2a953e8ef59 100644
+--- a/Tinycast/Features/Backup/Model/SettingsBackupCoverage.swift
++++ b/Tinycast/Features/Backup/Model/SettingsBackupCoverage.swift
+@@ -191,6 +191,14 @@ enum SettingsBackupCoverage {
+             "Names a folder on this Mac; the one a backup lands on may not have it.",
+         AppSettingsKey.notesFolder.rawValue:
+             "Names a folder on this Mac; the one a backup lands on may not have it.",
++        AppSettingsKey.proxyEnabled.rawValue:
++            "A proxy is specific to the network this Mac is on, and its credentials never travel.",
++        AppSettingsKey.proxyKind.rawValue:
++            "A proxy is specific to the network this Mac is on, and its credentials never travel.",
++        AppSettingsKey.proxyServer.rawValue:
++            "A proxy is specific to the network this Mac is on, and its credentials never travel.",
++        AppSettingsKey.proxyUsername.rawValue:
++            "A proxy is specific to the network this Mac is on, and its credentials never travel.",
+         AppSettingsKey.settingsFileEnabled.rawValue:
+             "Lets a file on this Mac change its settings; an import must not hand that to another."
+     ]
+diff --git a/Tinycast/Features/Calculator/Service/CurrencyRateStore.swift b/Tinycast/Features/Calculator/Service/CurrencyRateStore.swift
+index 4bcefedf69100e6b2d82e63b07db972d52eccc2c..e4cfc0139357ff5c11bd9cad92b4df3e499094a0 100644
+--- a/Tinycast/Features/Calculator/Service/CurrencyRateStore.swift
++++ b/Tinycast/Features/Calculator/Service/CurrencyRateStore.swift
+@@ -79,6 +79,7 @@ final class CurrencyRateStore {
+     private nonisolated static let session: URLSession = {
+         let config = URLSessionConfiguration.ephemeral
+         config.urlCache = nil
++        NetworkProxy.apply(to: config)
+         return URLSession(configuration: config)
+     }()
+ 
+diff --git a/Tinycast/Features/Dictation/Service/DictationModelDownloader.swift b/Tinycast/Features/Dictation/Service/DictationModelDownloader.swift
+index c4f91ad407e11bc2294b056486edb44135829e21..a76f06c1af33672988b36d58c2bd1fe76ec446bf 100644
+--- a/Tinycast/Features/Dictation/Service/DictationModelDownloader.swift
++++ b/Tinycast/Features/Dictation/Service/DictationModelDownloader.swift
+@@ -21,6 +21,7 @@ enum DictationModelDownloader {
+         let configuration = URLSessionConfiguration.ephemeral
+         configuration.urlCache = nil
+         configuration.protocolClasses = protocolClasses
++        NetworkProxy.apply(to: configuration)
+         let session = URLSession(configuration: configuration)
+         defer { session.invalidateAndCancel() }
+ 
+diff --git a/Tinycast/Features/Extensions/Model/ExtensionStoreResponse.swift b/Tinycast/Features/Extensions/Model/ExtensionStoreResponse.swift
+index 92a39ee5e9bfeb8c88a4f0a24e8ca5e790c7032e..3ff34f27426ac934d332a5b518c81f1922a3aaa2 100644
+--- a/Tinycast/Features/Extensions/Model/ExtensionStoreResponse.swift
++++ b/Tinycast/Features/Extensions/Model/ExtensionStoreResponse.swift
+@@ -89,6 +89,7 @@ enum ExtensionStoreResponse {
+ 
+ enum ExtensionStoreError: LocalizedError {
+     case malformedResponse
++    case proxyRejected
+     case rejected(String)
+     case downloadFailed(String)
+     case noPackageManager
+@@ -100,6 +101,9 @@ enum ExtensionStoreError: LocalizedError {
+         switch self {
+         case .malformedResponse:
+             return String(localized: "The server answered with something this version doesn't understand.")
++        case .proxyRejected:
++            return String(
++                localized: "The proxy rejected the connection. Check its type, server and credentials.")
+         case .rejected(let message):
+             return message
+         case .downloadFailed(let reason):
+diff --git a/Tinycast/Features/Extensions/Service/ExtensionFetcher.swift b/Tinycast/Features/Extensions/Service/ExtensionFetcher.swift
+index 72e2bc519b07ba55c575eae842163a97c355d8ee..21cd786dc827e4d1969b59aeea207506a3b428cd 100644
+--- a/Tinycast/Features/Extensions/Service/ExtensionFetcher.swift
++++ b/Tinycast/Features/Extensions/Service/ExtensionFetcher.swift
+@@ -15,6 +15,7 @@ final class ExtensionFetcher: Sendable {
+         configuration.urlCredentialStorage = nil
+         configuration.urlCache = nil
+         configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
++        NetworkProxy.apply(to: configuration)
+         session = URLSession(configuration: configuration)
+     }
+ 
+diff --git a/Tinycast/Features/Extensions/Service/ExtensionIconCache.swift b/Tinycast/Features/Extensions/Service/ExtensionIconCache.swift
+index a6bd9e82c5b5ce30f24c56aba9240c9648dd90c6..7fa081df00024dd83e5b1818a64e9a0cb3d5adb4 100644
+--- a/Tinycast/Features/Extensions/Service/ExtensionIconCache.swift
++++ b/Tinycast/Features/Extensions/Service/ExtensionIconCache.swift
+@@ -135,6 +135,7 @@ enum ExtensionIconCache {
+     private static let session: URLSession = {
+         let config = URLSessionConfiguration.ephemeral
+         config.urlCache = nil
++        NetworkProxy.apply(to: config)
+         return URLSession(configuration: config)
+     }()
+ 
+diff --git a/Tinycast/Features/Extensions/Service/ExtensionStoreClient.swift b/Tinycast/Features/Extensions/Service/ExtensionStoreClient.swift
+index 28267357e2506a4c7c3311db2b0b3d4cc2019420..0920e0eec8f3a3554906928980785bfc364f2e72 100644
+--- a/Tinycast/Features/Extensions/Service/ExtensionStoreClient.swift
++++ b/Tinycast/Features/Extensions/Service/ExtensionStoreClient.swift
+@@ -1,17 +1,25 @@
+ import Foundation
+ 
+-struct ExtensionStoreClient: Sendable {
++final class ExtensionStoreClient: Sendable {
++    private let session: URLSession
++    private let ownsSession: Bool
++
+     /// Cacheless, never `URLSession.shared`, so a search or a download leaves no second copy on disk.
+-    private static let defaultSession: URLSession = {
++    init() {
+         let config = URLSessionConfiguration.ephemeral
+         config.urlCache = nil
+-        return URLSession(configuration: config)
+-    }()
+-
+-    private let session: URLSession
++        NetworkProxy.apply(to: config)
++        session = URLSession(configuration: config)
++        ownsSession = true
++    }
+ 
+-    init(session: URLSession = ExtensionStoreClient.defaultSession) {
++    init(session: URLSession) {
+         self.session = session
++        ownsSession = false
++    }
++
++    deinit {
++        if ownsSession { session.invalidateAndCancel() }
+     }
+ 
+     func search(_ query: String) async throws -> [ExtensionListing] {
+@@ -92,6 +100,18 @@ struct ExtensionStoreClient: Sendable {
+ 
+     // MARK: - Fetching
+ 
++    private func data(for request: URLRequest) async throws -> (Data, URLResponse) {
++        do {
++            return try await session.data(for: request)
++        } catch let error as URLError
++            where NetworkProxy.current != nil
++            && (error.code == .badURL || error.code.rawValue == 310
++                || error.code.rawValue == 311)
++        {
++            throw ExtensionStoreError.proxyRejected
++        }
++    }
++
+     private func get(_ url: URL) async throws -> Data {
+         let isGitHubAPI = url.host == "api.github.com"
+         var request = URLRequest(url: url)
+@@ -100,7 +120,8 @@ struct ExtensionStoreClient: Sendable {
+         if isGitHubAPI {
+             request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+         }
+-        let (data, response) = try await session.data(for: request)
++        let (data, response) = try await data(for: request)
++
+         guard let http = response as? HTTPURLResponse else { return data }
+         guard (200..<300).contains(http.statusCode) else {
+             // Anonymous, so a private repository answers exactly like a missing one.
+diff --git a/Tinycast/Features/Extensions/Service/ExtensionWebSocketBridge.swift b/Tinycast/Features/Extensions/Service/ExtensionWebSocketBridge.swift
+index 7665c5d712b4ab558e460c590d22562105b3e7e9..a8633a14ff2229316b851b1806dcbfa6a7152c74 100644
+--- a/Tinycast/Features/Extensions/Service/ExtensionWebSocketBridge.swift
++++ b/Tinycast/Features/Extensions/Service/ExtensionWebSocketBridge.swift
+@@ -140,6 +140,7 @@ final class ExtensionWebSocketBridge: NSObject, Sendable, URLSessionWebSocketDel
+             let configuration = URLSessionConfiguration.ephemeral
+             configuration.httpCookieStorage = nil
+             configuration.urlCache = nil
++            NetworkProxy.apply(to: configuration)
+             let created = URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
+             box = created
+             return created
+diff --git a/Tinycast/Features/MCP/Service/MCPOAuthHTTP.swift b/Tinycast/Features/MCP/Service/MCPOAuthHTTP.swift
+index da9ec8f00cfde39688d9e5512e19352ba0843b97..f8e3f69bec474ecb989ba0a9c515cb757679ab2f 100644
+--- a/Tinycast/Features/MCP/Service/MCPOAuthHTTP.swift
++++ b/Tinycast/Features/MCP/Service/MCPOAuthHTTP.swift
+@@ -28,6 +28,7 @@ final class MCPOAuthHTTP: NSObject, URLSessionTaskDelegate, Sendable {
+         configuration.httpCookieStorage = nil
+         configuration.urlCredentialStorage = nil
+         configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
++        NetworkProxy.apply(to: configuration)
+         return URLSession(
+             configuration: configuration, delegate: MCPOAuthHTTP(followsSameOrigin: followsSameOrigin),
+             delegateQueue: nil)
+diff --git a/Tinycast/Features/Settings/AppSettings.swift b/Tinycast/Features/Settings/AppSettings.swift
+index a677b6bbf6eaa5b56a472d02fa4fc4aaf6c111f3..71936ed318c51d30a504d97abb1aca8dbaab3683 100644
+--- a/Tinycast/Features/Settings/AppSettings.swift
++++ b/Tinycast/Features/Settings/AppSettings.swift
+@@ -667,6 +667,25 @@ final class AppSettings {
+         didSet { defaults.set(supportRemindersEnabled, forKey: Key.supportReminders.rawValue) }
+     }
+ 
++    /// Whether Tinycast routes its internet requests through a proxy of the user's choosing.
++    var proxyEnabled: Bool {
++        didSet { defaults.set(proxyEnabled, forKey: Key.proxyEnabled.rawValue) }
++    }
++
++    var proxyKind: ProxyConfiguration.Kind {
++        didSet { defaults.set(proxyKind.rawValue, forKey: Key.proxyKind.rawValue) }
++    }
++
++    /// `host:port`, as typed in Settings; `NetworkProxy` parses it before a session uses it.
++    var proxyServer: String {
++        didSet { defaults.set(proxyServer, forKey: Key.proxyServer.rawValue) }
++    }
++
++    /// Optional; its password lives in Keychain through `ProxyCredentialStore`.
++    var proxyUsername: String {
++        didSet { defaults.set(proxyUsername, forKey: Key.proxyUsername.rawValue) }
++    }
++
+     /// Whether settings.json mirrors these settings; `AppCore` starts and stops the mirror.
+     var settingsFileEnabled: Bool {
+         didSet { defaults.set(settingsFileEnabled, forKey: Key.settingsFileEnabled.rawValue) }
+@@ -911,6 +930,12 @@ final class AppSettings {
+         supportRemindersEnabled =
+             defaults.object(forKey: Key.supportReminders.rawValue) == nil
+             || defaults.bool(forKey: Key.supportReminders.rawValue)
++        proxyEnabled = defaults.bool(forKey: Key.proxyEnabled.rawValue)
++        proxyKind =
++            defaults.string(forKey: Key.proxyKind.rawValue)
++            .flatMap(ProxyConfiguration.Kind.init(rawValue:)) ?? .http
++        proxyServer = defaults.string(forKey: Key.proxyServer.rawValue) ?? ""
++        proxyUsername = defaults.string(forKey: Key.proxyUsername.rawValue) ?? ""
+         settingsFileEnabled = defaults.bool(forKey: Key.settingsFileEnabled.rawValue)
+         allowedDeepLinks = defaults.stringArray(forKey: Key.allowedDeepLinks.rawValue) ?? []
+         loginItemRead = Task { [weak self] in
+diff --git a/Tinycast/Features/Settings/AppSettingsKey.swift b/Tinycast/Features/Settings/AppSettingsKey.swift
+index 372baa616669889a1adc9bdeedf90ed43fcb0c9d..cc468ac3639146ab954077896e75d317c0f50548 100644
+--- a/Tinycast/Features/Settings/AppSettingsKey.swift
++++ b/Tinycast/Features/Settings/AppSettingsKey.swift
+@@ -117,6 +117,10 @@ enum AppSettingsKey: String, CaseIterable {
+     case dictationIdleRelease = "dictationIdleReleaseMinutes"
+     case dictationLanguage = "dictationLanguage"
+     case supportReminders = "supportReminders"
++    case proxyEnabled = "proxyEnabled"
++    case proxyKind = "proxyKind"
++    case proxyServer = "proxyServer"
++    case proxyUsername = "proxyUsername"
+     case settingsFileEnabled = "settingsFileEnabled"
+     case allowedDeepLinks = "allowedDeepLinks"
+ }
+diff --git a/Tinycast/Features/Settings/Model/ProxyConfiguration.swift b/Tinycast/Features/Settings/Model/ProxyConfiguration.swift
+new file mode 100644
+index 0000000000000000000000000000000000000000..ec3af5a66d7e4f112e0bc10f95f42a1eb801d19e
+--- /dev/null
++++ b/Tinycast/Features/Settings/Model/ProxyConfiguration.swift
+@@ -0,0 +1,69 @@
++import Foundation
++
++/// One proxy endpoint, in the shape Settings and Network.framework both understand.
++struct ProxyConfiguration: Equatable, Sendable {
++    enum Kind: String, CaseIterable, Identifiable, Sendable {
++        case http
++        case https
++        case socks5
++
++        var id: Self { self }
++
++        var title: String {
++            switch self {
++            case .http: "HTTP"
++            case .https: "HTTPS"
++            case .socks5: "SOCKS5"
++            }
++        }
++
++        var defaultPort: Int {
++            switch self {
++            case .http: 80
++            case .https: 443
++            case .socks5: 1080
++            }
++        }
++    }
++
++    let kind: Kind
++    let host: String
++    let port: Int
++    let username: String?
++    let password: String?
++
++    init?(kind: Kind, host: String, port: Int, username: String?, password: String?) {
++        let host = host.trimmingCharacters(in: .whitespacesAndNewlines)
++        guard Self.isValidHost(host), (1...65_535).contains(port) else { return nil }
++        let username = username?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
++        let password = password ?? ""
++        self.kind = kind
++        self.host = host
++        self.port = port
++        self.username = username.isEmpty ? nil : username
++        self.password = password.isEmpty ? nil : password
++    }
++
++    static func isValidHost(_ host: String) -> Bool {
++        !host.isEmpty
++            && host.allSatisfy { !$0.isWhitespace && !"/?#@".contains($0) }
++    }
++
++    /// Splits the one Settings field into the host and port a session needs.
++    static func serverParts(from text: String) -> (host: String, port: Int)? {
++        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
++        guard !trimmed.isEmpty,
++            !trimmed.contains(where: { $0.isWhitespace || "/?#@".contains($0) }),
++            let components = URLComponents(string: "http://\(trimmed)"),
++            let rawHost = components.host,
++            let port = components.port,
++            (1...65_535).contains(port),
++            components.path.isEmpty,
++            components.query == nil,
++            components.fragment == nil
++        else { return nil }
++        let host = rawHost.trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
++        guard isValidHost(host) else { return nil }
++        return (host, port)
++    }
++}
+diff --git a/Tinycast/Features/Settings/Model/SettingsFileKey.swift b/Tinycast/Features/Settings/Model/SettingsFileKey.swift
+index 6080d44b2f103331aa6e7b6fc54d24b061270804..8dce2b525aecf4de6428967b050a24421abed15c 100644
+--- a/Tinycast/Features/Settings/Model/SettingsFileKey.swift
++++ b/Tinycast/Features/Settings/Model/SettingsFileKey.swift
+@@ -10,6 +10,10 @@ enum SettingsFileKey: String, CaseIterable, Sendable {
+     case escapeKeyBehavior = "general.escapeKeyBehavior"
+     case autoSwitchInputSource = "general.autoSwitchInputSource"
+     case supportReminders = "general.supportReminders"
++    case proxyEnabled = "general.proxyEnabled"
++    case proxyKind = "general.proxyType"
++    case proxyServer = "general.proxyServer"
++    case proxyUsername = "general.proxyUsername"
+     case language = "general.language"
+     case appearance = "appearance.theme"
+     case animationsEnabled = "appearance.animations"
+diff --git a/Tinycast/Features/Settings/Panes/GeneralSettingsView.swift b/Tinycast/Features/Settings/Panes/GeneralSettingsView.swift
+index af4929a77c4b41e2504e9ec03f613bd18356e884..f4080791e94ff770f652a130ec451ff44620f8ef 100644
+--- a/Tinycast/Features/Settings/Panes/GeneralSettingsView.swift
++++ b/Tinycast/Features/Settings/Panes/GeneralSettingsView.swift
+@@ -69,6 +69,8 @@ struct GeneralSettingsView: View {
+                 SettingsSectionHeader(.generalGeneral)
+             }
+ 
++            ProxySettingsSection()
++
+             Section {
+                 Picker(selection: $settings.appearance) {
+                     ForEach(AppAppearance.allCases) { appearance in
+diff --git a/Tinycast/Features/Settings/Panes/ProxySettingsSection.swift b/Tinycast/Features/Settings/Panes/ProxySettingsSection.swift
+new file mode 100644
+index 0000000000000000000000000000000000000000..8db4e273e667529b0aff43e09f911848368eef3c
+--- /dev/null
++++ b/Tinycast/Features/Settings/Panes/ProxySettingsSection.swift
+@@ -0,0 +1,130 @@
++import SwiftUI
++
++struct ProxySettingsSection: View {
++    @Environment(AppSettings.self) private var settings
++    @State private var password = ""
++    @State private var passwordStored = false
++    @State private var passwordFailure: String?
++    @FocusState private var passwordFocused: Bool
++
++    var body: some View {
++        @Bindable var settings = settings
++        return Section {
++            Toggle(isOn: $settings.proxyEnabled) {
++                SettingsRowTitle(.generalNetwork, "Proxy")
++                Text("Route Tinycast's internet requests through this proxy.")
++            }
++            if settings.proxyEnabled {
++                Picker(selection: $settings.proxyKind) {
++                    ForEach(ProxyConfiguration.Kind.allCases) { kind in
++                        Text(verbatim: kind.title).tag(kind)
++                    }
++                } label: {
++                    Text("Type")
++                }
++                SettingsRow(
++                    title: String(localized: "Server"),
++                    subtitle: String(localized: "Host name or IP address and port.")
++                ) {
++                    TextField(
++                        "", text: $settings.proxyServer,
++                        prompt: Text(verbatim: "127.0.0.1:8080")
++                    )
++                    .labelsHidden()
++                    .font(.callout.monospaced())
++                    .multilineTextAlignment(.trailing)
++                    .autocorrectionDisabled()
++                    .frame(width: 240)
++                }
++                SettingsRow(
++                    title: String(localized: "Username"),
++                    subtitle: String(localized: "Optional.")
++                ) {
++                    TextField("", text: $settings.proxyUsername, prompt: Text(verbatim: "user"))
++                        .labelsHidden()
++                        .font(.callout.monospaced())
++                        .multilineTextAlignment(.trailing)
++                        .autocorrectionDisabled()
++                        .frame(width: 240)
++                }
++                SettingsRow(
++                    title: String(localized: "Password"),
++                    subtitle: passwordStored
++                        ? String(localized: "A password is stored in Keychain.")
++                        : String(localized: "Optional.")
++                ) {
++                    VStack(alignment: .trailing, spacing: Theme.Spacing.xxs) {
++                        ZStack(alignment: .trailing) {
++                            SecureField(
++                                "", text: $password,
++                                prompt: passwordStored
++                                    ? Text(verbatim: "••••••••") : Text("Optional")
++                            )
++                            .labelsHidden()
++                            .font(.callout.monospaced())
++                            .multilineTextAlignment(.trailing)
++                            .padding(.trailing, passwordStored ? 28 : 0)
++                            .frame(width: 240)
++                            .focused($passwordFocused)
++                            .onSubmit(savePassword)
++                            if passwordStored {
++                                Button(action: removePassword) {
++                                    Image(systemName: "trash")
++                                }
++                                .buttonStyle(.borderless)
++                                .foregroundStyle(.secondary)
++                                .padding(.trailing, 4)
++                                .help("Remove password")
++                                .accessibilityLabel("Remove password")
++                            }
++                        }
++                        if let passwordFailure {
++                            Text(passwordFailure)
++                                .font(.caption)
++                                .foregroundStyle(.orange)
++                        }
++                    }
++                }
++                if ProxyConfiguration.serverParts(from: settings.proxyServer) == nil {
++                    Label(
++                        "Enter a server and port, like 127.0.0.1:8080.",
++                        systemImage: "exclamationmark.triangle.fill"
++                    )
++                    .font(.caption)
++                    .foregroundStyle(.orange)
++                }
++            }
++        } header: {
++            SettingsSectionHeader(.generalNetwork)
++        }
++        .onAppear { passwordStored = ProxyCredentialStore.hasPassword }
++        .onChange(of: passwordFocused) { old, new in
++            if old && !new { savePassword() }
++        }
++        .onDisappear { savePassword() }
++    }
++
++    private func savePassword() {
++        let trimmed = password.trimmingCharacters(in: .whitespacesAndNewlines)
++        guard !trimmed.isEmpty else { return }
++        do {
++            try ProxyCredentialStore.setPassword(trimmed)
++            password = ""
++            passwordStored = true
++            passwordFailure = nil
++        } catch {
++            passwordFailure = String(localized: "The password could not be saved to Keychain.")
++        }
++    }
++
++    private func removePassword() {
++        do {
++            try ProxyCredentialStore.setPassword(nil)
++            password = ""
++            passwordStored = false
++            passwordFailure = nil
++        } catch {
++            passwordFailure = String(localized: "The password could not be removed from Keychain.")
++        }
++    }
++}
+diff --git a/Tinycast/Features/Settings/Service/NetworkProxy.swift b/Tinycast/Features/Settings/Service/NetworkProxy.swift
+new file mode 100644
+index 0000000000000000000000000000000000000000..030aabfef846a06d6850615ac29341b514518f05
+--- /dev/null
++++ b/Tinycast/Features/Settings/Service/NetworkProxy.swift
+@@ -0,0 +1,48 @@
++import Foundation
++import Network
++
++/// Applies Settings' proxy to every private session; disabled or incomplete settings keep macOS's own.
++enum NetworkProxy {
++    static var current: ProxyConfiguration? {
++        let defaults = UserDefaults.standard
++        guard defaults.bool(forKey: AppSettingsKey.proxyEnabled.rawValue) else { return nil }
++        let kind =
++            defaults.string(forKey: AppSettingsKey.proxyKind.rawValue)
++            .flatMap(ProxyConfiguration.Kind.init(rawValue:)) ?? .http
++        let serverText = defaults.string(forKey: AppSettingsKey.proxyServer.rawValue) ?? ""
++        guard let server = ProxyConfiguration.serverParts(from: serverText) else { return nil }
++        let username = defaults.string(forKey: AppSettingsKey.proxyUsername.rawValue)
++        return ProxyConfiguration(
++            kind: kind, host: server.host, port: server.port, username: username,
++            password: ProxyCredentialStore.password)
++    }
++
++    /// `Network.ProxyConfiguration` is the only transport that carries SOCKS5 credentials; a
++    /// `connectionProxyDictionary` offers only the no-auth method and the proxy rejects the tunnel.
++    static func apply(to configuration: URLSessionConfiguration) {
++        configuration.connectionProxyDictionary = nil
++        guard let proxy = current,
++            let port = NWEndpoint.Port(rawValue: UInt16(proxy.port))
++        else {
++            configuration.proxyConfigurations = []
++            return
++        }
++        let endpoint = NWEndpoint.hostPort(host: NWEndpoint.Host(proxy.host), port: port)
++        var networkProxy: Network.ProxyConfiguration
++        switch proxy.kind {
++        case .http:
++            networkProxy = Network.ProxyConfiguration(httpCONNECTProxy: endpoint)
++        case .https:
++            networkProxy = Network.ProxyConfiguration(
++                httpCONNECTProxy: endpoint, tlsOptions: .init())
++        case .socks5:
++            networkProxy = Network.ProxyConfiguration(socksv5Proxy: endpoint)
++        }
++        if let username = proxy.username {
++            networkProxy.applyCredential(username: username, password: proxy.password ?? "")
++        }
++        networkProxy.allowFailover = false
++        networkProxy.excludedDomains = ["localhost", "127.0.0.1", "::1", "local"]
++        configuration.proxyConfigurations = [networkProxy]
++    }
++}
+diff --git a/Tinycast/Features/Settings/Service/ProxyCredentialStore.swift b/Tinycast/Features/Settings/Service/ProxyCredentialStore.swift
+new file mode 100644
+index 0000000000000000000000000000000000000000..5ddb95344fed40075728170dd60f7630f8a9bd8b
+--- /dev/null
++++ b/Tinycast/Features/Settings/Service/ProxyCredentialStore.swift
+@@ -0,0 +1,23 @@
++import Foundation
++
++/// The optional proxy password, kept out of `UserDefaults`, settings.json and every backup.
++enum ProxyCredentialStore {
++    private static let store = KeychainSecretStore(scope: "network-proxy")
++    private static let account = UUID(uuidString: "7A3B0E52-3D7A-4C1E-9E2A-9C1D0B5F6A21")!
++
++    static var hasPassword: Bool {
++        (try? store.hasSecret(for: account)) ?? false
++    }
++
++    static var password: String? {
++        try? store.secret(for: account)
++    }
++
++    static func setPassword(_ password: String?) throws {
++        guard let password, !password.isEmpty else {
++            try store.removeSecret(for: account)
++            return
++        }
++        try store.setSecret(password, for: account)
++    }
++}
+diff --git a/Tinycast/Features/Settings/SettingsAnchor.swift b/Tinycast/Features/Settings/SettingsAnchor.swift
+index c4f5b4789d3e0c2c16961909aa4d62dfd20850f9..8d9db36d8ff6f1b82435cebfeb0b932075b6687f 100644
+--- a/Tinycast/Features/Settings/SettingsAnchor.swift
++++ b/Tinycast/Features/Settings/SettingsAnchor.swift
+@@ -22,6 +22,7 @@ extension SettingsAnchor {
+     static let generalCompactShortcuts = Self(tab: .general, title: "Compact Shortcuts")
+     static let generalCalculator = Self(tab: .general, title: "Calculator")
+     static let generalGeneral = Self(tab: .general, title: "General")
++    static let generalNetwork = Self(tab: .general, title: "Network")
+     static let generalDeepLinks = Self(tab: .general, title: "Deeplinks")
+ 
+     static let applicationsSearchScopes = Self(tab: .applications, title: "Search Scopes")
+diff --git a/Tinycast/Features/Settings/SettingsFileSchema.swift b/Tinycast/Features/Settings/SettingsFileSchema.swift
+index e05abcc6423335a35a6c48ef149e887042317515..cc02f2496c3125666aa493491ea1fe5636a3f916 100644
+--- a/Tinycast/Features/Settings/SettingsFileSchema.swift
++++ b/Tinycast/Features/Settings/SettingsFileSchema.swift
+@@ -37,6 +37,18 @@ enum SettingsFileSchema {
+         case .escapeKeyBehavior: return bind(settings, \.escapeKeyBehavior)
+         case .autoSwitchInputSource: return bind(settings, \.autoSwitchInputSourceID)
+         case .supportReminders: return bind(settings, \.supportRemindersEnabled)
++        case .proxyEnabled: return bind(settings, \.proxyEnabled)
++        case .proxyKind: return bind(settings, \.proxyKind)
++        case .proxyServer:
++            return bind(settings, \.proxyServer) {
++                let trimmed = $0.trimmingCharacters(in: .whitespacesAndNewlines)
++                guard !trimmed.isEmpty else { return "" }
++                return ProxyConfiguration.serverParts(from: trimmed) == nil ? nil : trimmed
++            }
++        case .proxyUsername:
++            return bind(settings, \.proxyUsername) {
++                $0.trimmingCharacters(in: .whitespacesAndNewlines)
++            }
+         case .language: return bind(settings, \.language)
+         case .appearance: return bind(settings, \.appearance)
+         case .animationsEnabled: return bind(settings, \.animationsEnabled)
+@@ -190,6 +202,7 @@ extension DictationMode: SettingsFileRawValue {}
+ extension DictationDestination: SettingsFileRawValue {}
+ extension DictationIdleRelease: SettingsFileRawValue {}
+ extension JoinWindow: SettingsFileRawValue {}
++extension ProxyConfiguration.Kind: SettingsFileRawValue {}
+ 
+ extension ClipboardRetention: SettingsFileToken {
+     var settingsToken: SettingsFileJSON {
+diff --git a/Tinycast/Features/Settings/SettingsSearchCatalog.swift b/Tinycast/Features/Settings/SettingsSearchCatalog.swift
+index 3ac6021d45563c7fa06b97f078eebfb7d947e3fe..537a802d63f26396120dd9b387cd33e8e2e0771f 100644
+--- a/Tinycast/Features/Settings/SettingsSearchCatalog.swift
++++ b/Tinycast/Features/Settings/SettingsSearchCatalog.swift
+@@ -145,6 +145,11 @@ enum SettingsSearchCatalog {
+         .init(
+             .generalGeneral, "Auto-switch input source",
+             keywords: ["keyboard", "layout", "language", "abc"]),
++        .init(
++            .generalNetwork, "Proxy",
++            keywords: [
++                "network", "http", "https", "socks", "socks5", "internet", "tunnel", "localhost"
++            ]),
+         .init(
+             .generalAppearance, "Appearance",
+             keywords: ["dark", "light", "mode", "theme"]),
+diff --git a/Tinycast/Features/Updates/Service/UpdateCheckStore.swift b/Tinycast/Features/Updates/Service/UpdateCheckStore.swift
+index d6c313566487ec11934309bc630c24e4de0af030..9e626e33efdeac8502983c6baec7028abeb4c50b 100644
+--- a/Tinycast/Features/Updates/Service/UpdateCheckStore.swift
++++ b/Tinycast/Features/Updates/Service/UpdateCheckStore.swift
+@@ -174,6 +174,7 @@ final class UpdateCheckStore {
+     private nonisolated static let session: URLSession = {
+         let config = URLSessionConfiguration.ephemeral
+         config.urlCache = nil
++        NetworkProxy.apply(to: config)
+         return URLSession(configuration: config)
+     }()
+ 
+diff --git a/Tinycast/Features/Updates/Service/UpdateDownloader.swift b/Tinycast/Features/Updates/Service/UpdateDownloader.swift
+index b4a5e0252cd83a0230043c93df72d2b89c3a11f4..c16e8954a35c01f165785ce43345cc8717e8fb8c 100644
+--- a/Tinycast/Features/Updates/Service/UpdateDownloader.swift
++++ b/Tinycast/Features/Updates/Service/UpdateDownloader.swift
+@@ -16,6 +16,7 @@ enum UpdateDownloader {
+             // Cacheless, never `URLSession.shared`, so the only copy is the one on disk.
+             config.urlCache = nil
+             config.timeoutIntervalForRequest = 60
++            NetworkProxy.apply(to: config)
+             let delegate = Delegate(
+                 destination: destination, expected: release.assetSize, events: continuation)
+             let session = URLSession(configuration: config, delegate: delegate, delegateQueue: nil)
+diff --git a/Tinycast/Resources/Localizable.xcstrings b/Tinycast/Resources/Localizable.xcstrings
+index 70cc072206cc1022e28a9d08126155ff3cd4fa39..610bc25adbac2c6cbec0fd9a3f08628e7e3b694a 100644
+--- a/Tinycast/Resources/Localizable.xcstrings
++++ b/Tinycast/Resources/Localizable.xcstrings
+@@ -76312,6 +76312,58 @@
+         }
+       }
+     },
++    "Network" : {
++      "localizations" : {
++        "de" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Netzwerk"
++          }
++        },
++        "es" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Red"
++          }
++        },
++        "fr" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Réseau"
++          }
++        },
++        "ja" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "ネットワーク"
++          }
++        },
++        "ko" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "네트워크"
++          }
++        },
++        "pt" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Rede"
++          }
++        },
++        "ru" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Сеть"
++          }
++        },
++        "zh-Hans" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "网络"
++          }
++        }
++      }
++    },
+     "Never" : {
+       "localizations" : {
+         "de" : {
+@@ -92474,6 +92526,58 @@
+         }
+       }
+     },
++    "Proxy" : {
++      "localizations" : {
++        "de" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Proxy"
++          }
++        },
++        "es" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Proxy"
++          }
++        },
++        "fr" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Proxy"
++          }
++        },
++        "ja" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "プロキシ"
++          }
++        },
++        "ko" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "프록시"
++          }
++        },
++        "pt" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Proxy"
++          }
++        },
++        "ru" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Прокси"
++          }
++        },
++        "zh-Hans" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "代理服务器"
++          }
++        }
++      }
++    },
+     "Purple" : {
+       "localizations" : {
+         "de" : {
+@@ -140214,6 +140318,682 @@
+           }
+         }
+       }
++    },
++    "Route Tinycast's internet requests through this proxy." : {
++      "localizations" : {
++        "de" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Leitet die Internetanfragen von Tinycast über diesen Proxy."
++          }
++        },
++        "es" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Envía las solicitudes de internet de Tinycast a través de este proxy."
++          }
++        },
++        "fr" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Fait passer les requêtes Internet de Tinycast par ce proxy."
++          }
++        },
++        "ja" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Tinycast のインターネットリクエストをこのプロキシ経由で送信します。"
++          }
++        },
++        "ko" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Tinycast의 인터넷 요청을 이 프록시를 통해 보냅니다."
++          }
++        },
++        "pt" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Envia as solicitações de internet do Tinycast por este proxy."
++          }
++        },
++        "ru" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Отправляет интернет-запросы Tinycast через этот прокси."
++          }
++        },
++        "zh-Hans" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "通过此代理发送 Tinycast 的互联网请求。"
++          }
++        }
++      }
++    },
++    "Server" : {
++      "localizations" : {
++        "de" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Server"
++          }
++        },
++        "es" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Servidor"
++          }
++        },
++        "fr" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Serveur"
++          }
++        },
++        "ja" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "サーバー"
++          }
++        },
++        "ko" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "서버"
++          }
++        },
++        "pt" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Servidor"
++          }
++        },
++        "ru" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Сервер"
++          }
++        },
++        "zh-Hans" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "服务器"
++          }
++        }
++      }
++    },
++    "Port" : {
++      "localizations" : {
++        "de" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Port"
++          }
++        },
++        "es" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Puerto"
++          }
++        },
++        "fr" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Port"
++          }
++        },
++        "ja" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "ポート"
++          }
++        },
++        "ko" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "포트"
++          }
++        },
++        "pt" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Porta"
++          }
++        },
++        "ru" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Порт"
++          }
++        },
++        "zh-Hans" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "端口"
++          }
++        }
++      }
++    },
++    "Username" : {
++      "localizations" : {
++        "de" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Benutzername"
++          }
++        },
++        "es" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Nombre de usuario"
++          }
++        },
++        "fr" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Nom d’utilisateur"
++          }
++        },
++        "ja" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "ユーザー名"
++          }
++        },
++        "ko" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "사용자 이름"
++          }
++        },
++        "pt" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Nome de usuário"
++          }
++        },
++        "ru" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Имя пользователя"
++          }
++        },
++        "zh-Hans" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "用户名"
++          }
++        }
++      }
++    },
++    "Password" : {
++      "localizations" : {
++        "de" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Passwort"
++          }
++        },
++        "es" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Contraseña"
++          }
++        },
++        "fr" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Mot de passe"
++          }
++        },
++        "ja" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "パスワード"
++          }
++        },
++        "ko" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "비밀번호"
++          }
++        },
++        "pt" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Senha"
++          }
++        },
++        "ru" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Пароль"
++          }
++        },
++        "zh-Hans" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "密码"
++          }
++        }
++      }
++    },
++    "Optional." : {
++      "localizations" : {
++        "de" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Optional."
++          }
++        },
++        "es" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Opcional."
++          }
++        },
++        "fr" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Facultatif."
++          }
++        },
++        "ja" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "任意。"
++          }
++        },
++        "ko" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "선택 사항."
++          }
++        },
++        "pt" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Opcional."
++          }
++        },
++        "ru" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Необязательно."
++          }
++        },
++        "zh-Hans" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "可选。"
++          }
++        }
++      }
++    },
++    "A password is stored in Keychain." : {
++      "localizations" : {
++        "de" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Ein Passwort ist im Schlüsselbund gespeichert."
++          }
++        },
++        "es" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Hay una contraseña guardada en el Llavero."
++          }
++        },
++        "fr" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Un mot de passe est enregistré dans le trousseau."
++          }
++        },
++        "ja" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "パスワードはキーチェーンに保存されています。"
++          }
++        },
++        "ko" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "암호가 키체인에 저장되어 있습니다."
++          }
++        },
++        "pt" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Há uma senha guardada no Keychain."
++          }
++        },
++        "ru" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Пароль сохранён в связке ключей."
++          }
++        },
++        "zh-Hans" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "密码已存储在钥匙串中。"
++          }
++        }
++      }
++    },
++    "The password could not be saved to Keychain." : {
++      "localizations" : {
++        "de" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Das Passwort konnte nicht im Schlüsselbund gespeichert werden."
++          }
++        },
++        "es" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "No se pudo guardar la contraseña en el Llavero."
++          }
++        },
++        "fr" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Le mot de passe n’a pas pu être enregistré dans le trousseau."
++          }
++        },
++        "ja" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "パスワードをキーチェーンに保存できませんでした。"
++          }
++        },
++        "ko" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "암호를 키체인에 저장하지 못했습니다."
++          }
++        },
++        "pt" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Não foi possível guardar a senha no Keychain."
++          }
++        },
++        "ru" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Не удалось сохранить пароль в связке ключей."
++          }
++        },
++        "zh-Hans" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "无法将密码存储到钥匙串。"
++          }
++        }
++      }
++    },
++    "The password could not be removed from Keychain." : {
++      "localizations" : {
++        "de" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Das Passwort konnte nicht aus dem Schlüsselbund entfernt werden."
++          }
++        },
++        "es" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "No se pudo eliminar la contraseña del Llavero."
++          }
++        },
++        "fr" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Le mot de passe n’a pas pu être supprimé du trousseau."
++          }
++        },
++        "ja" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "キーチェーンからパスワードを削除できませんでした。"
++          }
++        },
++        "ko" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "키체인에서 암호를 삭제하지 못했습니다."
++          }
++        },
++        "pt" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Não foi possível remover a senha do Keychain."
++          }
++        },
++        "ru" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Не удалось удалить пароль из связки ключей."
++          }
++        },
++        "zh-Hans" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "无法从钥匙串中移除密码。"
++          }
++        }
++      }
++    },
++    "The proxy rejected the connection. Check its type, server and credentials." : {
++      "localizations" : {
++        "de" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Der Proxy hat die Verbindung abgelehnt. Prüfen Sie Typ, Server und Anmeldedaten."
++          }
++        },
++        "es" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "El proxy rechazó la conexión. Comprueba el tipo, el servidor y las credenciales."
++          }
++        },
++        "fr" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Le proxy a refusé la connexion. Vérifiez son type, son serveur et vos identifiants."
++          }
++        },
++        "ja" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "プロキシが接続を拒否しました。種類、サーバー、認証情報を確認してください。"
++          }
++        },
++        "ko" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "프록시가 연결을 거부했습니다. 유형, 서버 및 인증 정보를 확인하세요."
++          }
++        },
++        "pt" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "O proxy recusou a ligação. Verifique o tipo, o servidor e as credenciais."
++          }
++        },
++        "ru" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Прокси отклонил подключение. Проверьте тип, сервер и учётные данные."
++          }
++        },
++        "zh-Hans" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "代理服务器拒绝了连接。请检查类型、服务器和凭据。"
++          }
++        }
++      }
++    },
++    "Host name or IP address and port." : {
++      "localizations" : {
++        "de" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Hostname oder IP-Adresse und Port."
++          }
++        },
++        "es" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Nombre de host o dirección IP y puerto."
++          }
++        },
++        "fr" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Nom d’hôte ou adresse IP, et port."
++          }
++        },
++        "ja" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "ホスト名または IP アドレスとポート。"
++          }
++        },
++        "ko" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "호스트 이름 또는 IP 주소 및 포트."
++          }
++        },
++        "pt" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Nome do host ou endereço IP e porta."
++          }
++        },
++        "ru" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Имя хоста или IP-адрес и порт."
++          }
++        },
++        "zh-Hans" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "主机名或 IP 地址及端口。"
++          }
++        }
++      }
++    },
++    "Enter a server and port, like 127.0.0.1:8080." : {
++      "localizations" : {
++        "de" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Geben Sie Server und Port ein, z. B. 127.0.0.1:8080."
++          }
++        },
++        "es" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Introduce un servidor y un puerto, como 127.0.0.1:8080."
++          }
++        },
++        "fr" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Saisissez un serveur et un port, par exemple 127.0.0.1:8080."
++          }
++        },
++        "ja" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "サーバーとポートを入力してください（例: 127.0.0.1:8080）。"
++          }
++        },
++        "ko" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "서버와 포트를 입력하세요(예: 127.0.0.1:8080)."
++          }
++        },
++        "pt" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Introduza um servidor e uma porta, como 127.0.0.1:8080."
++          }
++        },
++        "ru" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Введите сервер и порт, например 127.0.0.1:8080."
++          }
++        },
++        "zh-Hans" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "请输入服务器和端口，例如 127.0.0.1:8080。"
++          }
++        }
++      }
++    },
++    "Remove password" : {
++      "localizations" : {
++        "de" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Passwort entfernen"
++          }
++        },
++        "es" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Eliminar contraseña"
++          }
++        },
++        "fr" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Supprimer le mot de passe"
++          }
++        },
++        "ja" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "パスワードを削除"
++          }
++        },
++        "ko" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "암호 삭제"
++          }
++        },
++        "pt" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Remover senha"
++          }
++        },
++        "ru" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "Удалить пароль"
++          }
++        },
++        "zh-Hans" : {
++          "stringUnit" : {
++            "state" : "translated",
++            "value" : "移除密码"
++          }
++        }
++      }
+     }
+   },
+   "version" : "1.0"
+diff --git a/docs/README.md b/docs/README.md
+index fdb3fe4103b539b358b90dbbc0fe06733c79fc72..177b2cd36f27dec11d230b24e8903c8efd0a4f77 100644
+--- a/docs/README.md
++++ b/docs/README.md
+@@ -48,6 +48,7 @@ open with an `## Invariants` section; read it before changing anything in that a
+ [uninstall](features/uninstall.md) ·
+ [backup](features/backup.md) ·
+ [settings file](features/settings-file.md) ·
++[network](features/network.md) ·
+ [Raycast import](features/raycast-import.md) ·
+ [Raycast extensions](features/extensions.md) ·
+ [updates](features/updates.md) ·
+diff --git a/docs/features/network.md b/docs/features/network.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..a877b7a41d3561c664d8ab243b862f36be926a1a
+--- /dev/null
++++ b/docs/features/network.md
+@@ -0,0 +1,59 @@
++# Network
++
++Tinycast's own internet traffic can be routed through one proxy, configured in **Settings → General
++→ Network → Proxy**. The switch is off by default, which leaves every request on macOS's own proxy
++configuration.
++
++## Invariants
++
++- **Every request still uses its feature's private `.ephemeral` session with `urlCache = nil`.** The
++  proxy only fills `proxyConfigurations`; it never introduces `URLSession.shared`, a shared cache or
++  a cookie jar.
++- **`Network.ProxyConfiguration` is the transport**, not `connectionProxyDictionary`. It is the only
++  public API that sends SOCKS5 credentials: a proxy dictionary offers just the no-auth method, so an
++  authenticated SOCKS5 server answers `0xFF` and CFNetwork reports `bad URL`.
++- **Off, or an incomplete configuration, means macOS's own proxy.** `NetworkProxy.apply(to:)` leaves
++  both proxy properties empty, so CFNetwork follows System Settings.
++- **The type is explicit**: HTTP, HTTPS or SOCKS5. HTTP is a cleartext HTTP CONNECT proxy; HTTPS
++  connects to the proxy itself over TLS; SOCKS5 uses `nw_proxy_config_create_socksv5`.
++- **The server is one `host:port` field.** The host is a name or IP address and the port is 1–65535.
++  A path, query, fragment, whitespace or `@` is rejected; Settings shows an inline error and the
++  helper does not apply it.
++- **Authentication is optional.** The username travels with the rest of the setting; the password
++  lives in Keychain, never in `UserDefaults`, `settings.json` or a backup. `ProxyCredentialStore` is
++  the only reader and writer. Credentials are handed to Network.framework with
++  `applyCredential(username:password:)`.
++- **Loopback and `.local` hosts are excluded** through `excludedDomains`, so Ollama, LM Studio and a
++  local MCP or extension server keep answering while a proxy is set.
++- **A change applies to connections opened afterwards.** Most AI requests and every extension-store
++  search build a fresh session, so those pick a change up immediately; long-lived sessions may need
++  a relaunch.
++
++## Where it applies
++
++`NetworkProxy.apply(to:)` is called wherever a feature builds its session:
++
++| Feature | Sessions |
++| --- | --- |
++| AI | `HTTPAIProvider` turns and `AIModelDiscoveryService` |
++| MCP | `MCPOAuthHTTP` |
++| Calculator | `CurrencyRateStore`'s exchange-rate fetches |
++| Updates | `UpdateCheckStore` and `UpdateDownloader` |
++| Extensions | `ExtensionFetcher`, `ExtensionStoreClient`, `ExtensionIconCache` and `ExtensionWebSocketBridge` |
++| Dictation | `DictationModelDownloader` |
++
++`ExtensionStoreClient` owns one session for its lifetime, so a store search started after changing the
++proxy uses the new setting rather than a session cached at launch. The `curl` in
++`ExtensionFetcher.socketResponse` keeps `--noproxy *`: it talks to a Unix socket on this Mac, never to
++the internet.
++
++## The setting
++
++`AppSettings` keeps `proxyEnabled`, `proxyKind`, `proxyServer` and `proxyUsername`;
++`ProxyConfiguration.Kind` is `http`, `https` or `socks5`, and `proxyServer` is the one `host:port`
++field. `settings.json` mirrors the four as `general.proxy*`, and only values Tinycast can parse are
++accepted.
++
++All of them stay out of backups: a proxy names a network this Mac is on, and an import must not
++redirect another Mac's traffic or grant its credentials. The password has no settings-file key at
++all. See [settings-file.md](settings-file.md) and [backup.md](backup.md).
+diff --git a/docs/features/settings-file.md b/docs/features/settings-file.md
+index a983199503f29219d77690fc8b290ece172d492c..1794a0ed748b544cf89d8184b40a194e6b61fbf3 100644
+--- a/docs/features/settings-file.md
++++ b/docs/features/settings-file.md
+@@ -102,7 +102,11 @@ because the app rewrites the file.
+     "popToRootSeconds": 0,
+     "escapeKeyBehavior": "navigateBackOrClose",
+     "autoSwitchInputSource": null,
+-    "supportReminders": true
++    "supportReminders": true,
++    "proxyEnabled": false,
++    "proxyType": "http",
++    "proxyServer": "127.0.0.1:8080",
++    "proxyUsername": ""
+   },
+   "clipboard": {
+     "enabled": true,
+@@ -134,6 +138,12 @@ Where a number has a special case, the case is a word:
+ | `calendar.hideCurrentEventAfterMinutes` | `"never"`, 0 (as it starts), 5, 10, 30 |
+ | `windowManagement.gap` | 0 to 64 |
+ | `snippets.folder`, `notes.folder` | an absolute or `~/` path, or `null` for Application Support |
++| `general.proxyType` | `"http"`, `"https"`, `"socks5"` |
++| `general.proxyServer` | `host:port`, or `""` |
++| `general.proxyUsername` | an optional username, or `""` |
++
++The proxy password has no key here: it is stored only in Keychain. `general.proxyEnabled` is off by
++default, and all four proxy keys stay out of backups.
+ 
+ On first launch, `general.language` is set to the primary system language if supported, otherwise
+ `"en"`. That explicit choice is saved; later system-language changes do not change it.
+diff --git a/docs/not-planned.md b/docs/not-planned.md
+index a06f73d9a6537bf602acb0e1e9f128417331465e..9001bd0e76a2485aa0c285ac8cc44717304d6839 100644
+--- a/docs/not-planned.md
++++ b/docs/not-planned.md
+@@ -162,7 +162,6 @@ Tinycast is an all-in-one launcher, not a full window manager. Its window tools
+ - **Old Raycast AI chats on import.** Raycast doesn't share that data. ([#1286](https://github.com/abue-ammar/tinycast/issues/1286))
+ - **Quick Action results inside the palette, or a preview that stays open.** **Instead:** copy the
+   result with its copy button. ([#1360](https://github.com/abue-ammar/tinycast/issues/1360), [#1023](https://github.com/abue-ammar/tinycast/issues/1023))
+-- **A proxy setting.** ([#430](https://github.com/abue-ammar/tinycast/issues/430))
+ - **Your own dictation models or a personal word list.** Tinycast is not a dictation app.
+   ([#1529](https://github.com/abue-ammar/tinycast/issues/1529), [#1332](https://github.com/abue-ammar/tinycast/issues/1332))
+ 
+diff --git a/website/content/docs/reference/settings.md b/website/content/docs/reference/settings.md
+index 12865df8d72d23231d7f1b14654d008967dfcd3d..7600b8888e92b2519bff63479e616e9a95202806 100644
+--- a/website/content/docs/reference/settings.md
++++ b/website/content/docs/reference/settings.md
+@@ -29,6 +29,7 @@ There are 23 panes in four groups.
+ | Pop to Root Search                | Immediately · After 5, 15, 30, 60 or 90 seconds                                                                                                                                                   | **Immediately**                                                            |
+ | Escape Key Behavior               | Navigate back or close window · Close window and pop to root                                                                                                                                      | **Navigate back or close window**                                          |
+ | Auto-switch input source          | None, or any keyboard input source you have                                                                                                                                                       | **None**                                                                   |
++| Proxy                             | On · Off, with an optional HTTP, HTTPS or SOCKS5 server and credentials                                                                                                                           | Off, so macOS's own proxy is used                                          |
+ | Appearance                        | System · Light · Dark                                                                                                                                                                             | **System**                                                                 |
+ | Show animations                   | On · Off                                                                                                                                                                                          | **On**                                                                     |
+ | Interface size                    | Default · Large · Larger                                                                                                                                                                          | **Default**                                                                |
