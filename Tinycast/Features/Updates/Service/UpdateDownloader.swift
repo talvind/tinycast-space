@@ -41,6 +41,7 @@ enum UpdateDownloader {
         let config = URLSessionConfiguration.ephemeral
         config.urlCache = nil
         config.timeoutIntervalForRequest = 60
+        NetworkProxy.apply(to: config)
         return config
     }
 

@@ -430,6 +430,11 @@ run DictationWorkerTests   Tinycast/Features/Dictation/Model/DictationModel.swif
                            Tinycast/Features/Dictation/Service/DictationWorker.swift \
                            Tinycast/Features/Dictation/Service/DictationModelStore.swift \
                            Tinycast/Features/Dictation/Service/DictationModelDownloader.swift \
+                           Tinycast/Features/Settings/Model/ProxyConfiguration.swift \
+                           Tinycast/Features/Settings/Service/NetworkProxy.swift \
+                           Tinycast/Features/Settings/Service/ProxyCredentialStore.swift \
+                           Tinycast/Platform/KeychainSecretStore.swift \
+                           Tinycast/Features/Settings/AppSettingsKey.swift \
                            Tinycast/Platform/ProcessExit.swift Tinycast/Platform/AppPaths.swift
 run HotKeyTests            Tinycast/Features/HotKeys/Model/DoubleTapModifier.swift \
                            Tinycast/Features/HotKeys/Model/ModifierKey.swift \
@@ -487,6 +492,11 @@ run ExtensionIconTests     Tinycast/Platform/Appearance.swift \
                            Tinycast/Features/Extensions/Service/ExtensionNodeShims.swift \
                            Tinycast/Features/Extensions/Service/ExtensionRuntime.swift \
                            Tinycast/Features/Extensions/Service/ExtensionIconCache.swift \
+                           Tinycast/Features/Settings/Model/ProxyConfiguration.swift \
+                           Tinycast/Features/Settings/Service/NetworkProxy.swift \
+                           Tinycast/Features/Settings/Service/ProxyCredentialStore.swift \
+                           Tinycast/Platform/KeychainSecretStore.swift \
+                           Tinycast/Features/Settings/AppSettingsKey.swift \
                            Tinycast/Features/Extensions/UI/ExtensionAnimatedImage.swift \
                            Tinycast/Features/Extensions/UI/ExtensionImage.swift \
                            Tinycast/Features/Clipboard/Model/ColorValue.swift \
@@ -716,6 +726,7 @@ run CloudSyncTests         Tinycast/Features/CloudSync/Model/*.swift \
                            Tinycast/DesignSystem/IconTint.swift
 run SettingsBackupTests    Tinycast/Features/Settings/AppSettingsKey.swift \
                            Tinycast/Features/Backup/Model/SettingsBackupCoverage.swift
+run ProxyTests             Tinycast/Features/Settings/Model/ProxyConfiguration.swift
 run HyperKeyEngineTests    Tinycast/Features/HotKeys/Model/HyperKeyEngine.swift \
                            Tinycast/Features/HotKeys/Model/PhysicalHyperKeyPress.swift \
                            Tinycast/Features/HotKeys/Model/HyperKey.swift \
@@ -849,6 +860,11 @@ run slow ExtensionTests    -parse-as-library \
                            $E/Service/ExtensionRuntime.swift \
                            $E/Service/ExtensionNameResolver.swift \
                            $E/Service/ExtensionWebSocketBridge.swift \
+                           Tinycast/Features/Settings/Model/ProxyConfiguration.swift \
+                           Tinycast/Features/Settings/Service/NetworkProxy.swift \
+                           Tinycast/Features/Settings/Service/ProxyCredentialStore.swift \
+                           Tinycast/Platform/KeychainSecretStore.swift \
+                           Tinycast/Features/Settings/AppSettingsKey.swift \
                            $E/UI/ExtensionAnimatedImage.swift \
                            $E/UI/ExtensionImage.swift \
                            $E/UI/ExtensionScreen.swift \
@@ -871,6 +887,11 @@ run UpdatesTests           Tinycast/Features/Updates/Model/*.swift \
 run UpdateCheckTests       Tinycast/Features/Updates/Model/*.swift \
                            Tinycast/Features/Updates/Service/UpdateCheckStore.swift \
                            Tinycast/Features/Updates/Service/UpdateFailure.swift \
+                           Tinycast/Features/Settings/Model/ProxyConfiguration.swift \
+                           Tinycast/Features/Settings/Service/NetworkProxy.swift \
+                           Tinycast/Features/Settings/Service/ProxyCredentialStore.swift \
+                           Tinycast/Platform/KeychainSecretStore.swift \
+                           Tinycast/Features/Settings/AppSettingsKey.swift \
                            Tinycast/Platform/AppPaths.swift
 run SupportTests           Tinycast/Features/Support/Model/*.swift
 run AIProviderTests        Tinycast/Features/Settings/AppSettingsKey.swift \
@@ -991,6 +1012,9 @@ run MCPOAuthTests          Tinycast/Platform/ExecutableLocator.swift \
                            Tinycast/Platform/ProcessExit.swift \
                            Tinycast/Platform/KeychainSecretStore.swift \
                            Tinycast/Features/Settings/AppSettingsKey.swift \
+                           Tinycast/Features/Settings/Model/ProxyConfiguration.swift \
+                           Tinycast/Features/Settings/Service/NetworkProxy.swift \
+                           Tinycast/Features/Settings/Service/ProxyCredentialStore.swift \
                            Tinycast/Features/AI/Model/AIConnection.swift \
                            Tinycast/Features/AI/Model/AppleIntelligence.swift \
                            Tinycast/Features/AI/Model/AITool.swift \
@@ -1008,6 +1032,9 @@ run slow MCPStdioTests     Tinycast/Platform/ExecutableLocator.swift \
                            Tinycast/Platform/ProcessExit.swift \
                            Tinycast/Platform/KeychainSecretStore.swift \
                            Tinycast/Features/Settings/AppSettingsKey.swift \
+                           Tinycast/Features/Settings/Model/ProxyConfiguration.swift \
+                           Tinycast/Features/Settings/Service/NetworkProxy.swift \
+                           Tinycast/Features/Settings/Service/ProxyCredentialStore.swift \
                            Tinycast/Features/AI/Model/AIConnection.swift \
                            Tinycast/Features/AI/Model/AppleIntelligence.swift \
                            Tinycast/Features/AI/Model/AITool.swift \

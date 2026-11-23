@@ -22,7 +22,7 @@ enum SyncSettingScope {
             .quicklinksEnabled, .appleShortcutsEnabled, .aiEnabled, .dictationModel,
             .dictationMicrophone, .fileSearchEnabled, .fileSearchScopes, .notesEnabled,
             .notesFolder, .snippetsFolder, .navigationEnabled, .windowManagementEnabled,
-            .clipboardEnabled:
+            .clipboardEnabled, .proxyEnabled, .proxyKind, .proxyServer, .proxyUsername:
             nil
         case .showInMenuBar: .showInMenuBar
         case .appearance, .animationsEnabled, .iconStyle: .appearance

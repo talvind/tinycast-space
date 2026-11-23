@@ -28,6 +28,7 @@ final class MCPOAuthHTTP: NSObject, URLSessionTaskDelegate, Sendable {
         configuration.httpCookieStorage = nil
         configuration.urlCredentialStorage = nil
         configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+        NetworkProxy.apply(to: configuration)
         return URLSession(
             configuration: configuration, delegate: MCPOAuthHTTP(followsSameOrigin: followsSameOrigin),
             delegateQueue: nil)

@@ -135,6 +135,7 @@ enum ExtensionIconCache {
     private static let session: URLSession = {
         let config = URLSessionConfiguration.ephemeral
         config.urlCache = nil
+        NetworkProxy.apply(to: config)
         return URLSession(configuration: config)
     }()
 

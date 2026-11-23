@@ -107,6 +107,7 @@ struct HTTPAIProvider: AIProvider {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.urlCache = nil
         configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+        NetworkProxy.apply(to: configuration)
         return URLSession(configuration: configuration)
     }
 

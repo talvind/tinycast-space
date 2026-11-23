@@ -21,6 +21,7 @@ enum DictationModelDownloader {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.urlCache = nil
         configuration.protocolClasses = protocolClasses
+        NetworkProxy.apply(to: configuration)
         let session = URLSession(configuration: configuration)
         defer { session.invalidateAndCancel() }
 

@@ -15,6 +15,7 @@ final class ExtensionFetcher: Sendable {
         configuration.urlCredentialStorage = nil
         configuration.urlCache = nil
         configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        NetworkProxy.apply(to: configuration)
         session = URLSession(configuration: configuration)
     }
 

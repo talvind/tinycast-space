@@ -140,6 +140,7 @@ final class ExtensionWebSocketBridge: NSObject, Sendable, URLSessionWebSocketDel
             let configuration = URLSessionConfiguration.ephemeral
             configuration.httpCookieStorage = nil
             configuration.urlCache = nil
+            NetworkProxy.apply(to: configuration)
             let created = URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
             box = created
             return created

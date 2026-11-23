@@ -24,6 +24,7 @@ of changes listed below. For what Tinycast is and how to use it, read the
 | **Search settings, words and folders.** `?` in the launcher searches Tinycast's own settings. The dictionary suggests spellings for a word it doesn't know. In File Search, Tab on a folder searches inside it. | Ported from [mSarheed/pipcast](https://github.com/mSarheed/pipcast). |
 | **Small fixes.** Currency rates are never overwritten by an older refresh. *Check for Updates* says why it failed (offline, GitHub's rate limit). Long lists group by date faster, and launch no longer waits on the login-item check. | Bugs upstream shares; fixes from [mSarheed/pipcast](https://github.com/mSarheed/pipcast). |
 | **Hyper glyph for external remappers.** With Hyper Key set to None, *Show ✦ for another app's Hyper key* still shows ✦ for the Hyper chord. | For Hyper keys provided by Karabiner, Hyperkey and similar apps. |
+| **Proxy settings.** Settings → General → Network → Proxy routes every internet request through an HTTP, HTTPS or SOCKS5 proxy, with an optional username and a Keychain-backed password. The server is one `host:port` field; loopback and `.local` stay direct. | Upstream declined a proxy setting ([#430](https://github.com/abue-ammar/tinycast/issues/430)). |
 
 ## Alias + Space
 

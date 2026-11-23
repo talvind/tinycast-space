@@ -37,6 +37,18 @@ enum SettingsFileSchema {
         case .escapeKeyBehavior: return bind(settings, \.escapeKeyBehavior)
         case .autoSwitchInputSource: return bind(settings, \.autoSwitchInputSourceID)
         case .supportReminders: return bind(settings, \.supportRemindersEnabled)
+        case .proxyEnabled: return bind(settings, \.proxyEnabled)
+        case .proxyKind: return bind(settings, \.proxyKind)
+        case .proxyServer:
+            return bind(settings, \.proxyServer) {
+                let trimmed = $0.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !trimmed.isEmpty else { return "" }
+                return ProxyConfiguration.serverParts(from: trimmed) == nil ? nil : trimmed
+            }
+        case .proxyUsername:
+            return bind(settings, \.proxyUsername) {
+                $0.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
         case .language: return bind(settings, \.language)
         case .appearance: return bind(settings, \.appearance)
         case .animationsEnabled: return bind(settings, \.animationsEnabled)
@@ -197,6 +209,7 @@ extension DictationMode: SettingsFileRawValue {}
 extension DictationDestination: SettingsFileRawValue {}
 extension DictationIdleRelease: SettingsFileRawValue {}
 extension JoinWindow: SettingsFileRawValue {}
+extension ProxyConfiguration.Kind: SettingsFileRawValue {}
 
 extension ClipboardRetention: SettingsFileToken {
     var settingsToken: SettingsFileJSON {

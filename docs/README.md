@@ -49,6 +49,7 @@ open with an `## Invariants` section; read it before changing anything in that a
 [backup](features/backup.md) ·
 [settings file](features/settings-file.md) ·
 [iCloud sync](features/icloud-sync.md) ·
+[network](features/network.md) ·
 [Raycast import](features/raycast-import.md) ·
 [Raycast extensions](features/extensions.md) ·
 [updates](features/updates.md) ·

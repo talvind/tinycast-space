@@ -1,17 +1,25 @@
 import Foundation
 
-struct ExtensionStoreClient: Sendable {
+final class ExtensionStoreClient: Sendable {
+    private let session: URLSession
+    private let ownsSession: Bool
+
     /// Cacheless, never `URLSession.shared`, so a search or a download leaves no second copy on disk.
-    private static let defaultSession: URLSession = {
+    init() {
         let config = URLSessionConfiguration.ephemeral
         config.urlCache = nil
-        return URLSession(configuration: config)
-    }()
+        NetworkProxy.apply(to: config)
+        session = URLSession(configuration: config)
+        ownsSession = true
+    }
 
-    private let session: URLSession
-
-    init(session: URLSession = ExtensionStoreClient.defaultSession) {
+    init(session: URLSession) {
         self.session = session
+        ownsSession = false
+    }
+
+    deinit {
+        if ownsSession { session.invalidateAndCancel() }
     }
 
     func search(_ query: String) async throws -> [ExtensionListing] {
@@ -92,6 +100,18 @@ struct ExtensionStoreClient: Sendable {
 
     // MARK: - Fetching
 
+    private func data(for request: URLRequest) async throws -> (Data, URLResponse) {
+        do {
+            return try await session.data(for: request)
+        } catch let error as URLError
+            where NetworkProxy.current != nil
+            && (error.code == .badURL || error.code.rawValue == 310
+                || error.code.rawValue == 311)
+        {
+            throw ExtensionStoreError.proxyRejected
+        }
+    }
+
     private func get(_ url: URL) async throws -> Data {
         let isGitHubAPI = url.host == "api.github.com"
         var request = URLRequest(url: url)
@@ -100,7 +120,8 @@ struct ExtensionStoreClient: Sendable {
         if isGitHubAPI {
             request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
         }
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await data(for: request)
+
         guard let http = response as? HTTPURLResponse else { return data }
         guard (200..<300).contains(http.statusCode) else {
             // Anonymous, so a private repository answers exactly like a missing one.
